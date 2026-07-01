@@ -69,6 +69,9 @@ public class BankingService {
     @Transactional
     public UserResponse createUser(UserRequest request) {
         User user = new User();
+        if (request.id() != null) {
+            user.setId(request.id());
+        }
         user.setUsername(request.username());
         user.setPasswordHash(request.passwordHash());
         user.setEmail(request.email());
@@ -109,6 +112,9 @@ public class BankingService {
     public AccountResponse createAccount(AccountRequest request) {
         Customer customer = findCustomer(request.customerId());
         Account account = new Account();
+        if (request.id() != null) {
+            account.setId(request.id());
+        }
         account.setCustomer(customer);
         account.setAccountNumber(request.accountNumber());
         account.setAccountType(request.accountType());
@@ -116,6 +122,37 @@ public class BankingService {
         account.setBalance(request.balance());
         account.setStatus(request.status());
         return toAccountResponse(accountRepository.save(account));
+    }
+
+    @Transactional
+    public AccountResponse updateAccount(UUID id, AccountRequest request) {
+        Account account = findAccount(id);
+        if (request.customerId() != null) {
+            Customer customer = findCustomer(request.customerId());
+            account.setCustomer(customer);
+        }
+        if (request.accountNumber() != null) {
+            account.setAccountNumber(request.accountNumber());
+        }
+        if (request.accountType() != null) {
+            account.setAccountType(request.accountType());
+        }
+        if (request.currency() != null) {
+            account.setCurrency(request.currency());
+        }
+        if (request.balance() != null) {
+            account.setBalance(request.balance());
+        }
+        if (request.status() != null) {
+            account.setStatus(request.status());
+        }
+        return toAccountResponse(accountRepository.save(account));
+    }
+
+    @Transactional
+    public void deleteAccount(UUID id) {
+        Account account = findAccount(id);
+        accountRepository.delete(account);
     }
 
     public List<TransactionResponse> getAllTransactions() {
@@ -129,6 +166,9 @@ public class BankingService {
     @Transactional
     public TransactionResponse createTransaction(TransactionRequest request) {
         Transaction transaction = new Transaction();
+        if (request.id() != null) {
+            transaction.setId(request.id());
+        }
         transaction.setTransactionReference(request.transactionReference());
         transaction.setFromAccount(findOptionalAccount(request.fromAccountId()));
         transaction.setToAccount(findOptionalAccount(request.toAccountId()));
@@ -150,6 +190,9 @@ public class BankingService {
     @Transactional
     public QrPaymentResponse createQrPayment(QrPaymentRequest request) {
         QrPayment qrPayment = new QrPayment();
+        if (request.id() != null) {
+            qrPayment.setId(request.id());
+        }
         qrPayment.setMerchantName(request.merchantName());
         qrPayment.setQrCodeData(request.qrCodeData());
         qrPayment.setTransaction(findTransaction(request.transactionId()));
@@ -167,6 +210,9 @@ public class BankingService {
     @Transactional
     public NotificationResponse createNotification(NotificationRequest request) {
         Notification notification = new Notification();
+        if (request.id() != null) {
+            notification.setId(request.id());
+        }
         notification.setUser(findUser(request.userId()));
         notification.setTitle(request.title());
         notification.setMessage(request.message());

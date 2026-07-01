@@ -9,7 +9,7 @@ public final class BankingDtos {
     private BankingDtos() {
     }
 
-    public record UserRequest(String username, String passwordHash, String email, String role) {
+    public record UserRequest(UUID id, String username, String passwordHash, String email, String role) {
     }
 
     public record UserResponse(UUID id, String username, String email, String role, LocalDateTime createdAt) {
@@ -35,6 +35,7 @@ public final class BankingDtos {
     }
 
     public record AccountRequest(
+            UUID id,
             UUID customerId,
             String accountNumber,
             String accountType,
@@ -55,6 +56,7 @@ public final class BankingDtos {
     }
 
     public record TransactionRequest(
+            UUID id,
             String transactionReference,
             UUID fromAccountId,
             UUID toAccountId,
@@ -76,7 +78,7 @@ public final class BankingDtos {
             LocalDateTime createdAt) {
     }
 
-    public record QrPaymentRequest(String merchantName, String qrCodeData, UUID transactionId) {
+    public record QrPaymentRequest(UUID id, String merchantName, String qrCodeData, UUID transactionId) {
     }
 
     public record QrPaymentResponse(
@@ -88,6 +90,7 @@ public final class BankingDtos {
     }
 
     public record NotificationRequest(
+            UUID id,
             UUID userId,
             String title,
             String message,
