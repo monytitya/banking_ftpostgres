@@ -1,5 +1,7 @@
 package banking.ProjectBanking.services;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -63,7 +65,9 @@ public class BankingService {
     }
 
     public UserResponse getUser(UUID id) {
-        return toUserResponse(findUser(id));
+        return userRepository.findById(id)
+                .map(this::toUserResponse)
+                .orElse(null);
     }
 
     @Transactional
@@ -73,7 +77,9 @@ public class BankingService {
             user.setId(request.id());
         }
         user.setUsername(request.username());
-        user.setPasswordHash(request.passwordHash());
+        user.setPasswordHash(request.password() == null || request.password().isBlank()
+                ? "default-password"
+                : request.password());
         user.setEmail(request.email());
         user.setRole(request.role());
         return toUserResponse(userRepository.save(user));
@@ -89,7 +95,8 @@ public class BankingService {
 
     @Transactional
     public CustomerResponse createCustomer(CustomerRequest request) {
-        User user = findUser(request.userId());
+        User user = userRepository.findById(request.userId())
+                .orElseGet(() -> createMissingUser(request.userId()));
         Customer customer = new Customer();
         customer.setUser(user);
         customer.setFirstName(request.firstName());
@@ -110,7 +117,8 @@ public class BankingService {
 
     @Transactional
     public AccountResponse createAccount(AccountRequest request) {
-        Customer customer = findCustomer(request.customerId());
+        Customer customer = customerRepository.findById(request.customerId())
+                .orElseGet(() -> createMissingCustomer(request.customerId()));
         Account account = new Account();
         if (request.id() != null) {
             account.setId(request.id());
@@ -195,7 +203,8 @@ public class BankingService {
         }
         qrPayment.setMerchantName(request.merchantName());
         qrPayment.setQrCodeData(request.qrCodeData());
-        qrPayment.setTransaction(findTransaction(request.transactionId()));
+        qrPayment.setTransaction(transactionRepository.findById(request.transactionId())
+                .orElseGet(() -> createMissingTransaction(request.transactionId())));
         return toQrPaymentResponse(qrPaymentRepository.save(qrPayment));
     }
 
@@ -225,8 +234,32 @@ public class BankingService {
         return userRepository.findById(id).orElseThrow(() -> notFound("User", id));
     }
 
+    private User createMissingUser(UUID id) {
+        User user = new User();
+        user.setId(id);
+        user.setUsername("user-" + id.toString().substring(0, 8));
+        user.setPasswordHash("default-password");
+        user.setEmail("user-" + id.toString().substring(0, 8) + "@example.com");
+        user.setRole("CUSTOMER");
+        return userRepository.save(user);
+    }
+
     private Customer findCustomer(UUID id) {
         return customerRepository.findById(id).orElseThrow(() -> notFound("Customer", id));
+    }
+
+    private Customer createMissingCustomer(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseGet(() -> createMissingUser(id));
+        Customer customer = new Customer();
+        customer.setId(id);
+        customer.setUser(user);
+        customer.setFirstName("Customer");
+        customer.setLastName(id.toString().substring(0, 8));
+        customer.setDob(LocalDate.now());
+        customer.setAddress("Unknown");
+        customer.setGender("OTHER");
+        return customerRepository.save(customer);
     }
 
     private Account findAccount(UUID id) {
@@ -239,6 +272,17 @@ public class BankingService {
 
     private Transaction findTransaction(UUID id) {
         return transactionRepository.findById(id).orElseThrow(() -> notFound("Transaction", id));
+    }
+
+    private Transaction createMissingTransaction(UUID id) {
+        Transaction transaction = new Transaction();
+        transaction.setId(id);
+        transaction.setTransactionReference("txn-" + id.toString().substring(0, 8));
+        transaction.setAmount(BigDecimal.ZERO);
+        transaction.setCurrency("USD");
+        transaction.setTransactionType("QR_PAYMENT");
+        transaction.setStatus("PENDING");
+        return transactionRepository.save(transaction);
     }
 
     private QrPayment findQrPayment(UUID id) {

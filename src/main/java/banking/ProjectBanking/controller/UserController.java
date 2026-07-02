@@ -36,6 +36,10 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getUserById(@PathVariable UUID id) {
         UserResponse user = bankingService.getUser(id);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse("User not found: " + id, null));
+        }
         return ResponseEntity.ok(new ApiResponse("User retrieved successfully", user));
     }
 
