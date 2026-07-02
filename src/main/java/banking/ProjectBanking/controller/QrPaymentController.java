@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import banking.ProjectBanking.dto.ApiResponse;
 import banking.ProjectBanking.dto.BankingDtos.QrPaymentRequest;
 import banking.ProjectBanking.dto.BankingDtos.QrPaymentResponse;
+import banking.ProjectBanking.services.BakongPaymentService;
 import banking.ProjectBanking.services.BankingService;
 
 @RestController
@@ -22,9 +23,11 @@ import banking.ProjectBanking.services.BankingService;
 public class QrPaymentController {
 
     private final BankingService bankingService;
+    private final BakongPaymentService bakongPaymentService;
 
-    public QrPaymentController(BankingService bankingService) {
+    public QrPaymentController(BankingService bankingService, BakongPaymentService bakongPaymentService) {
         this.bankingService = bankingService;
+        this.bakongPaymentService = bakongPaymentService;
     }
 
     @GetMapping
@@ -44,5 +47,15 @@ public class QrPaymentController {
         QrPaymentResponse createdQrPayment = bankingService.createQrPayment(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponse("QR Payment created successfully", createdQrPayment));
+    }
+
+    @PostMapping("/{id}/complete")
+    public ResponseEntity<ApiResponse> completeQrPayment(@PathVariable UUID id) {
+        boolean ok = bakongPaymentService.completePayment(id);
+        if (ok) {
+            return ResponseEntity.ok(new ApiResponse("QR Payment completed successfully", null));
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiResponse("QR Payment completion failed", null));
     }
 }
